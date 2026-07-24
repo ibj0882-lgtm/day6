@@ -1,0 +1,1087 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>나의 일정 관리</title>
+  <style>
+    /* Global Reset & Design Tokens - Clean Minimalism Theme */
+    :root {
+      --bg-primary: #f8fafc;
+      --bg-surface: #ffffff;
+      --bg-secondary: #f1f5f9;
+      --border-color: #e2e8f0;
+      --text-primary: #0f172a;
+      --text-secondary: #64748b;
+      --text-muted: #94a3b8;
+      --accent-color: #0f172a;
+      --accent-hover: #1e293b;
+      --accent-light: #f1f5f9;
+      --accent-text: #0f172a;
+      --success-color: #16a34a;
+      --danger-color: #e11d48;
+      --shadow-sm: 0 1px 3px 0 rgba(0, 0, 0, 0.03), 0 1px 2px -1px rgba(0, 0, 0, 0.03);
+      --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -2px rgba(0, 0, 0, 0.05);
+      --radius-sm: 6px;
+      --radius-md: 8px;
+      --radius-lg: 16px;
+      --radius-full: 9999px;
+    }
+
+    [data-theme="dark"] {
+      --bg-primary: #020617;
+      --bg-surface: #0f172a;
+      --bg-secondary: #1e293b;
+      --border-color: #334155;
+      --text-primary: #f8fafc;
+      --text-secondary: #94a3b8;
+      --text-muted: #64748b;
+      --accent-color: #f8fafc;
+      --accent-hover: #e2e8f0;
+      --accent-light: #1e293b;
+      --accent-text: #0f172a;
+      --success-color: #22c55e;
+      --danger-color: #f43f5e;
+      --shadow-sm: 0 1px 3px 0 rgba(0, 0, 0, 0.3);
+      --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.3);
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    }
+
+    body {
+      background-color: var(--bg-primary);
+      color: var(--text-primary);
+      line-height: 1.5;
+      padding: 24px;
+      min-height: 100vh;
+      transition: background-color 0.2s ease, color 0.2s ease;
+    }
+
+    .container {
+      max-width: 1100px;
+      margin: 0 auto;
+    }
+
+    /* Header Styling */
+    header {
+      background: var(--bg-surface);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-lg);
+      padding: 20px 24px;
+      margin-bottom: 20px;
+      box-shadow: var(--shadow-sm);
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-between;
+      align-items: center;
+      gap: 16px;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .brand-icon {
+      width: 40px;
+      height: 40px;
+      background: var(--accent-color);
+      color: var(--accent-text);
+      border-radius: var(--radius-md);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: bold;
+      font-size: 20px;
+    }
+
+    [data-theme="dark"] .brand-icon {
+      color: #0f172a;
+    }
+
+    .brand-text h1 {
+      font-size: 20px;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+    }
+
+    .brand-text p {
+      font-size: 13px;
+      color: var(--text-secondary);
+    }
+
+    .header-actions {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .clock {
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--text-secondary);
+      background: var(--bg-secondary);
+      padding: 8px 14px;
+      border-radius: var(--radius-sm);
+      border: 1px solid var(--border-color);
+    }
+
+    /* Date Bar Navigation */
+    .date-bar {
+      background: var(--bg-surface);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-lg);
+      padding: 16px 24px;
+      margin-bottom: 24px;
+      box-shadow: var(--shadow-sm);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      flex-wrap: wrap;
+    }
+
+    .date-controls {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .date-picker-input {
+      padding: 8px 14px;
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-full);
+      background: var(--bg-surface);
+      color: var(--text-primary);
+      font-size: 14px;
+      font-weight: 600;
+      outline: none;
+      cursor: pointer;
+      transition: border-color 0.15s ease;
+    }
+
+    .date-picker-input:focus {
+      border-color: var(--text-primary);
+    }
+
+    .date-display-text {
+      font-size: 16px;
+      font-weight: 700;
+      letter-spacing: -0.01em;
+      color: var(--text-primary);
+    }
+
+    /* Buttons */
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      padding: 8px 16px;
+      font-size: 13px;
+      font-weight: 500;
+      border-radius: var(--radius-full);
+      border: 1px solid transparent;
+      cursor: pointer;
+      transition: all 0.15s ease;
+      white-space: nowrap;
+    }
+
+    .btn-primary {
+      background-color: var(--accent-color);
+      color: #ffffff;
+    }
+
+    [data-theme="dark"] .btn-primary {
+      color: #0f172a;
+    }
+
+    .btn-primary:hover {
+      background-color: var(--accent-hover);
+      transform: translateY(-1px);
+    }
+
+    .btn-secondary {
+      background-color: var(--bg-surface);
+      color: var(--text-primary);
+      border-color: var(--border-color);
+    }
+
+    .btn-secondary:hover {
+      background-color: var(--bg-secondary);
+      border-color: var(--text-muted);
+    }
+
+    .btn-excel {
+      background-color: #107c41;
+      color: #ffffff;
+      border-color: transparent;
+    }
+
+    .btn-excel:hover {
+      background-color: #0b5c30;
+      transform: translateY(-1px);
+    }
+
+    .btn-danger {
+      background-color: rgba(225, 29, 72, 0.08);
+      color: var(--danger-color);
+      border-color: rgba(225, 29, 72, 0.2);
+    }
+
+    .btn-danger:hover {
+      background-color: rgba(225, 29, 72, 0.15);
+    }
+
+    /* Grid Layout */
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(12, 1fr);
+      gap: 20px;
+    }
+
+    .col-6 {
+      grid-column: span 6;
+    }
+
+    .col-12 {
+      grid-column: span 12;
+    }
+
+    @media (max-width: 900px) {
+      .col-6 {
+        grid-column: span 12;
+      }
+    }
+
+    /* Card Component */
+    .card {
+      background: var(--bg-surface);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-lg);
+      padding: 24px;
+      box-shadow: var(--shadow-sm);
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      transition: border-color 0.15s ease;
+    }
+
+    .card:hover {
+      border-color: #cbd5e1;
+    }
+
+    [data-theme="dark"] .card:hover {
+      border-color: #475569;
+    }
+
+    .card-title {
+      font-size: 15px;
+      font-weight: 600;
+      letter-spacing: -0.01em;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-bottom: 1px solid var(--border-color);
+      padding-bottom: 14px;
+      color: var(--text-primary);
+    }
+
+    .card-title .badge {
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      padding: 4px 10px;
+      border-radius: var(--radius-full);
+      background: var(--bg-secondary);
+      color: var(--text-secondary);
+      border: 1px solid var(--border-color);
+    }
+
+    /* Input & Forms */
+    .input-group {
+      display: flex;
+      gap: 8px;
+    }
+
+    input[type="text"], textarea {
+      width: 100%;
+      padding: 10px 14px;
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-md);
+      background: var(--bg-surface);
+      color: var(--text-primary);
+      font-size: 14px;
+      outline: none;
+      transition: border-color 0.15s ease;
+    }
+
+    input[type="text"]:focus, textarea:focus {
+      border-color: var(--text-primary);
+    }
+
+    textarea {
+      resize: vertical;
+      min-height: 90px;
+      line-height: 1.6;
+    }
+
+    /* Todo List Styling */
+    .todo-list {
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      min-height: 240px;
+    }
+
+    .todo-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 10px 14px;
+      background: var(--bg-secondary);
+      border-radius: var(--radius-md);
+      gap: 12px;
+      transition: opacity 0.2s ease, transform 0.1s ease;
+    }
+
+    .todo-item.completed span {
+      text-decoration: line-through;
+      color: var(--text-muted);
+    }
+
+    .todo-left {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex: 1;
+      overflow: hidden;
+    }
+
+    .todo-left span {
+      font-size: 14px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .todo-checkbox {
+      width: 18px;
+      height: 18px;
+      cursor: pointer;
+      accent-color: var(--text-primary);
+    }
+
+    .todo-delete {
+      background: none;
+      border: none;
+      color: var(--text-muted);
+      cursor: pointer;
+      font-size: 16px;
+      padding: 2px 6px;
+      border-radius: var(--radius-sm);
+    }
+
+    .todo-delete:hover {
+      color: var(--danger-color);
+      background: rgba(220, 38, 38, 0.1);
+    }
+
+    .filter-tabs {
+      display: flex;
+      gap: 6px;
+      margin-top: 2px;
+    }
+
+    .tab-btn {
+      padding: 5px 12px;
+      font-size: 12px;
+      font-weight: 600;
+      border-radius: var(--radius-full);
+      border: 1px solid var(--border-color);
+      background: var(--bg-surface);
+      color: var(--text-secondary);
+      cursor: pointer;
+      transition: all 0.15s ease;
+    }
+
+    .tab-btn.active {
+      background: var(--accent-color);
+      color: #ffffff;
+      border-color: transparent;
+    }
+
+    [data-theme="dark"] .tab-btn.active {
+      color: #0f172a;
+    }
+
+    .pagination-bar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding-top: 12px;
+      border-top: 1px solid var(--border-color);
+      font-size: 12px;
+      color: var(--text-secondary);
+    }
+
+    /* Memo List Styling */
+    .memo-list {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      max-height: 320px;
+      overflow-y: auto;
+      padding-right: 4px;
+    }
+
+    .memo-card {
+      background: var(--bg-secondary);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-md);
+      padding: 12px 14px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      position: relative;
+    }
+
+    .memo-card-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 11px;
+      color: var(--text-muted);
+      border-bottom: 1px dashed var(--border-color);
+      padding-bottom: 6px;
+    }
+
+    .memo-card-content {
+      font-size: 14px;
+      color: var(--text-primary);
+      white-space: pre-wrap;
+      word-break: break-word;
+      line-height: 1.6;
+    }
+
+    .memo-card-actions {
+      display: flex;
+      gap: 6px;
+      justify-content: flex-end;
+      padding-top: 4px;
+    }
+
+    .btn-xs {
+      padding: 3px 8px;
+      font-size: 11px;
+      border-radius: var(--radius-sm);
+    }
+
+    /* Footer Banner */
+    .banner {
+      background: var(--bg-surface);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-md);
+      padding: 14px 20px;
+      font-size: 13px;
+      color: var(--text-primary);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-top: 24px;
+      box-shadow: var(--shadow-sm);
+    }
+
+    .banner code {
+      font-family: monospace;
+      background: var(--bg-secondary);
+      padding: 2px 6px;
+      border-radius: 4px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <!-- Header -->
+    <header>
+      <div class="brand">
+        <div class="brand-icon">📅</div>
+        <div class="brand-text">
+          <h1>나의 일정 관리</h1>
+          <p>일자별 할 일 목록과 다중 메모장 (Pure HTML Workspace)</p>
+        </div>
+      </div>
+      <div class="header-actions">
+        <div id="clock" class="clock">00:00:00</div>
+        <button id="themeToggle" class="btn btn-secondary" title="다크/라이트 모드 전환">
+          🌙 테마
+        </button>
+        <button id="downloadHtmlBtn" class="btn btn-primary" title="이 HTML 파일 직접 다운로드">
+          ⬇️ HTML 파일 다운로드
+        </button>
+      </div>
+    </header>
+
+    <!-- Date Navigation Bar -->
+    <div class="date-bar">
+      <div class="date-controls">
+        <button id="prevDateBtn" class="btn btn-secondary" title="이전 날짜">◀ 이전 날</button>
+        <input type="date" id="datePicker" class="date-picker-input" />
+        <button id="todayBtn" class="btn btn-secondary">오늘</button>
+        <button id="nextDateBtn" class="btn btn-secondary" title="다음 날짜">다음 날 ▶</button>
+      </div>
+      <div class="date-display-text" id="dateFormattedDisplay">
+        2026년 07월 23일 (목)
+      </div>
+    </div>
+
+    <!-- Main Grid -->
+    <div class="grid">
+      <!-- To-Do List Card -->
+      <div class="card col-6">
+        <div class="card-title">
+          <span>📋 일자별 할 일 목록 (최대 10개씩 표시)</span>
+          <span id="todoBadge" class="badge">0개 남음</span>
+        </div>
+        <div class="input-group">
+          <input type="text" id="todoInput" placeholder="선택한 날짜의 할 일을 입력하세요..." />
+          <button id="addTodoBtn" class="btn btn-primary">추가</button>
+        </div>
+        <div class="filter-tabs">
+          <button class="tab-btn active" data-filter="all">전체</button>
+          <button class="tab-btn" data-filter="active">진행 중</button>
+          <button class="tab-btn" data-filter="completed">완료됨</button>
+        </div>
+        <ul id="todoList" class="todo-list">
+          <!-- Dynamically populated -->
+        </ul>
+        <!-- Pagination controls for 10 items per page -->
+        <div class="pagination-bar">
+          <span id="pageInfo">1 / 1 페이지 (총 0개 항목)</span>
+          <div style="display: flex; gap: 6px;">
+            <button id="prevPageBtn" class="tab-btn">◀ 이전</button>
+            <button id="nextPageBtn" class="tab-btn">다음 ▶</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Quick Notes Card (Multi Memos per Date) -->
+      <div class="card col-6">
+        <div class="card-title">
+          <span>📝 일자별 메모장 목록</span>
+          <span id="noteBadge" class="badge">0개 메모</span>
+        </div>
+        
+        <!-- Add / Edit Memo Form -->
+        <div style="display: flex; flex-direction: column; gap: 8px;">
+          <textarea id="noteInput" placeholder="새로운 메모를 작성하세요..."></textarea>
+          <div style="display: flex; justify-content: space-between; align-items: center;">
+            <span id="noteStats" style="font-size: 12px; color: var(--text-muted);">0자</span>
+            <div style="display: flex; gap: 6px;">
+              <button id="cancelEditMemoBtn" class="btn btn-secondary btn-xs" style="display: none;">취소</button>
+              <button id="addMemoBtn" class="btn btn-primary btn-xs">➕ 메모 추가</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- List of memos for the selected date -->
+        <div id="memoList" class="memo-list">
+          <!-- Dynamically rendered memos -->
+        </div>
+        
+        <!-- Bottom Action Bar -->
+        <div style="display: flex; flex-direction: column; gap: 10px; border-top: 1px solid var(--border-color); padding-top: 12px;">
+          <div style="display: flex; gap: 8px; flex-wrap: wrap; justify-content: flex-end;">
+            <button id="exportNoteExcelBtn" class="btn btn-excel">📊 이 날짜 메모 엑셀 저장</button>
+            <button id="exportAllExcelBtn" class="btn btn-secondary">📁 전체 기록 엑셀 저장</button>
+            <button id="deleteDateNotesBtn" class="btn btn-danger">🗑️ 이 날짜 메모 전체 삭제</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Bottom Info Banner -->
+    <div class="banner">
+      <div>
+        <strong>📌 독립 실행 안내:</strong> 이 파일(<code>standalone.html</code>)은 인터넷 연결이나 외부 서버 없이 컴퓨터로 바로 다운로드해서 더블클릭하면 모든 브라우저에서 독립적으로 동작합니다.
+      </div>
+      <button id="clearAllDataBtn" class="btn btn-secondary" style="font-size: 12px; padding: 4px 10px;">
+        데이터 초기화
+      </button>
+    </div>
+  </div>
+
+  <!-- JavaScript Logic -->
+  <script>
+    // --- 1. Clock Implementation ---
+    function updateClock() {
+      const now = new Date();
+      const hours = String(now.getHours()).padStart(2, '0');
+      const minutes = String(now.getMinutes()).padStart(2, '0');
+      const seconds = String(now.getSeconds()).padStart(2, '0');
+      document.getElementById('clock').textContent = `${hours}:${minutes}:${seconds}`;
+    }
+    setInterval(updateClock, 1000);
+    updateClock();
+
+    // --- 2. Theme Toggle ---
+    const themeToggle = document.getElementById('themeToggle');
+    let currentTheme = localStorage.getItem('theme') || 'light';
+    
+    function applyTheme(theme) {
+      if (theme === 'dark') {
+        document.documentElement.setAttribute('data-theme', 'dark');
+        themeToggle.textContent = '☀️ 라이트';
+      } else {
+        document.documentElement.removeAttribute('data-theme');
+        themeToggle.textContent = '🌙 다크';
+      }
+      localStorage.setItem('theme', theme);
+    }
+    applyTheme(currentTheme);
+
+    themeToggle.addEventListener('click', () => {
+      currentTheme = currentTheme === 'light' ? 'dark' : 'light';
+      applyTheme(currentTheme);
+    });
+
+    // --- 3. Date State Management ---
+    function getTodayString() {
+      const now = new Date();
+      const yyyy = now.getFullYear();
+      const mm = String(now.getMonth() + 1).padStart(2, '0');
+      const dd = String(now.getDate()).padStart(2, '0');
+      return `${yyyy}-${mm}-${dd}`;
+    }
+
+    let selectedDate = localStorage.getItem('selected_date') || getTodayString();
+    
+    const datePicker = document.getElementById('datePicker');
+    const dateFormattedDisplay = document.getElementById('dateFormattedDisplay');
+    const prevDateBtn = document.getElementById('prevDateBtn');
+    const nextDateBtn = document.getElementById('nextDateBtn');
+    const todayBtn = document.getElementById('todayBtn');
+
+    function updateDateDisplay() {
+      datePicker.value = selectedDate;
+      localStorage.setItem('selected_date', selectedDate);
+      
+      const parts = selectedDate.split('-');
+      if (parts.length === 3) {
+        const dateObj = new Date(parseInt(parts[0]), parseInt(parts[1]) - 1, parseInt(parts[2]));
+        const dayOfWeekKo = ['일', '월', '화', '수', '목', '금', '토'][dateObj.getDay()];
+        dateFormattedDisplay.textContent = `${parts[0]}년 ${parts[1]}월 ${parts[2]}일 (${dayOfWeekKo})`;
+      } else {
+        dateFormattedDisplay.textContent = selectedDate;
+      }
+
+      // Reset editing state, todo page, and render memos
+      cancelEditingMemo();
+      todoCurrentPage = 1;
+      renderTodos();
+      renderMemos();
+    }
+
+    function changeDateByDays(days) {
+      const parts = selectedDate.split('-');
+      const dateObj = new Date(parseInt(parts[0]), parseInt(parts[1]) - 1, parseInt(parts[2]));
+      dateObj.setDate(dateObj.getDate() + days);
+      const yyyy = dateObj.getFullYear();
+      const mm = String(dateObj.getMonth() + 1).padStart(2, '0');
+      const dd = String(dateObj.getDate()).padStart(2, '0');
+      selectedDate = `${yyyy}-${mm}-${dd}`;
+      updateDateDisplay();
+    }
+
+    datePicker.addEventListener('change', (e) => {
+      if (e.target.value) {
+        selectedDate = e.target.value;
+        updateDateDisplay();
+      }
+    });
+
+    prevDateBtn.addEventListener('click', () => changeDateByDays(-1));
+    nextDateBtn.addEventListener('click', () => changeDateByDays(1));
+    todayBtn.addEventListener('click', () => {
+      selectedDate = getTodayString();
+      updateDateDisplay();
+    });
+
+    // --- 4. Todo List State & Pagination (10 per page) ---
+    let todos = JSON.parse(localStorage.getItem('todos') || '[]');
+    todos = todos.map(t => t.date ? t : { ...t, date: getTodayString() });
+
+    let currentFilter = 'all';
+    let todoCurrentPage = 1;
+    const PAGE_SIZE = 10;
+
+    const todoInput = document.getElementById('todoInput');
+    const addTodoBtn = document.getElementById('addTodoBtn');
+    const todoList = document.getElementById('todoList');
+    const todoBadge = document.getElementById('todoBadge');
+    const filterBtns = document.querySelectorAll('.filter-tabs .tab-btn');
+    const pageInfo = document.getElementById('pageInfo');
+    const prevPageBtn = document.getElementById('prevPageBtn');
+    const nextPageBtn = document.getElementById('nextPageBtn');
+
+    function saveAndRenderTodos() {
+      localStorage.setItem('todos', JSON.stringify(todos));
+      renderTodos();
+    }
+
+    function renderTodos() {
+      todoList.innerHTML = '';
+
+      const dateTodos = todos.filter(t => t.date === selectedDate);
+      const filtered = dateTodos.filter(t => {
+        if (currentFilter === 'active') return !t.completed;
+        if (currentFilter === 'completed') return t.completed;
+        return true;
+      });
+
+      const activeCount = dateTodos.filter(t => !t.completed).length;
+      todoBadge.textContent = `${activeCount}개 남음`;
+
+      const totalItems = filtered.length;
+      const totalPages = Math.ceil(totalItems / PAGE_SIZE) || 1;
+
+      if (todoCurrentPage > totalPages) todoCurrentPage = totalPages;
+      if (todoCurrentPage < 1) todoCurrentPage = 1;
+
+      const startIndex = (todoCurrentPage - 1) * PAGE_SIZE;
+      const endIndex = Math.min(startIndex + PAGE_SIZE, totalItems);
+      const pageItems = filtered.slice(startIndex, endIndex);
+
+      pageInfo.textContent = `${todoCurrentPage} / ${totalPages} 페이지 (총 ${totalItems}개 항목 중 ${totalItems === 0 ? 0 : startIndex + 1}~${endIndex})`;
+
+      prevPageBtn.disabled = todoCurrentPage <= 1;
+      nextPageBtn.disabled = todoCurrentPage >= totalPages;
+      prevPageBtn.style.opacity = todoCurrentPage <= 1 ? '0.5' : '1';
+      nextPageBtn.style.opacity = todoCurrentPage >= totalPages ? '0.5' : '1';
+
+      if (pageItems.length === 0) {
+        todoList.innerHTML = `<li style="text-align:center; color: var(--text-muted); font-size: 13px; padding: 40px 10px;">이 날짜에 등록된 항목이 없습니다.</li>`;
+        return;
+      }
+
+      pageItems.forEach(todo => {
+        const li = document.createElement('li');
+        li.className = `todo-item ${todo.completed ? 'completed' : ''}`;
+        
+        li.innerHTML = `
+          <div class="todo-left">
+            <input type="checkbox" class="todo-checkbox" ${todo.completed ? 'checked' : ''} onchange="toggleTodo(${todo.id})">
+            <span>${escapeHtml(todo.text)}</span>
+          </div>
+          <button class="todo-delete" onclick="deleteTodo(${todo.id})">✕</button>
+        `;
+        todoList.appendChild(li);
+      });
+    }
+
+    function addTodo() {
+      const text = todoInput.value.trim();
+      if (!text) return;
+      todos.push({
+        id: Date.now(),
+        date: selectedDate,
+        text: text,
+        completed: false
+      });
+      todoInput.value = '';
+      saveAndRenderTodos();
+    }
+
+    function toggleTodo(id) {
+      todos = todos.map(t => t.id === id ? { ...t, completed: !t.completed } : t);
+      saveAndRenderTodos();
+    }
+
+    function deleteTodo(id) {
+      todos = todos.filter(t => t.id !== id);
+      saveAndRenderTodos();
+    }
+
+    addTodoBtn.addEventListener('click', addTodo);
+    todoInput.addEventListener('keypress', (e) => {
+      if (e.key === 'Enter') addTodo();
+    });
+
+    filterBtns.forEach(btn => {
+      btn.addEventListener('click', () => {
+        filterBtns.forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        currentFilter = btn.dataset.filter;
+        todoCurrentPage = 1;
+        renderTodos();
+      });
+    });
+
+    prevPageBtn.addEventListener('click', () => {
+      if (todoCurrentPage > 1) {
+        todoCurrentPage--;
+        renderTodos();
+      }
+    });
+
+    nextPageBtn.addEventListener('click', () => {
+      const dateTodos = todos.filter(t => t.date === selectedDate);
+      const filtered = dateTodos.filter(t => {
+        if (currentFilter === 'active') return !t.completed;
+        if (currentFilter === 'completed') return t.completed;
+        return true;
+      });
+      const totalPages = Math.ceil(filtered.length / PAGE_SIZE) || 1;
+      if (todoCurrentPage < totalPages) {
+        todoCurrentPage++;
+        renderTodos();
+      }
+    });
+
+    // --- 5. Date-based Multi Memos Management (일자별 다중 메모 작성/추가/수정/삭제) ---
+    let memos = JSON.parse(localStorage.getItem('memos_v2') || '[]');
+
+    // Migration from legacy notes_by_date structure if present
+    const legacyNotesObj = JSON.parse(localStorage.getItem('notes_by_date') || '{}');
+    if (Object.keys(legacyNotesObj).length > 0) {
+      Object.keys(legacyNotesObj).forEach(dateKey => {
+        const item = legacyNotesObj[dateKey];
+        if (item && item.text) {
+          memos.push({
+            id: Date.now() + Math.floor(Math.random() * 1000),
+            date: dateKey,
+            text: item.text,
+            time: item.updatedAt || new Date().toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' })
+          });
+        }
+      });
+      localStorage.removeItem('notes_by_date');
+      localStorage.setItem('memos_v2', JSON.stringify(memos));
+    }
+
+    let editingMemoId = null;
+
+    const noteInput = document.getElementById('noteInput');
+    const noteBadge = document.getElementById('noteBadge');
+    const noteStats = document.getElementById('noteStats');
+    const addMemoBtn = document.getElementById('addMemoBtn');
+    const cancelEditMemoBtn = document.getElementById('cancelEditMemoBtn');
+    const memoList = document.getElementById('memoList');
+    const exportNoteExcelBtn = document.getElementById('exportNoteExcelBtn');
+    const exportAllExcelBtn = document.getElementById('exportAllExcelBtn');
+    const deleteDateNotesBtn = document.getElementById('deleteDateNotesBtn');
+
+    noteInput.addEventListener('input', () => {
+      noteStats.textContent = `${noteInput.value.length}자`;
+    });
+
+    function saveMemos() {
+      localStorage.setItem('memos_v2', JSON.stringify(memos));
+      renderMemos();
+    }
+
+    function renderMemos() {
+      memoList.innerHTML = '';
+      const dateMemos = memos.filter(m => m.date === selectedDate);
+
+      noteBadge.textContent = `${dateMemos.length}개 메모`;
+
+      if (dateMemos.length === 0) {
+        memoList.innerHTML = `<div style="text-align:center; color: var(--text-muted); font-size: 13px; padding: 30px 10px;">이 날짜에 작성된 메모가 없습니다. 위에 메모를 입력하고 '메모 추가'를 누르세요.</div>`;
+        return;
+      }
+
+      dateMemos.forEach((memo, index) => {
+        const card = document.createElement('div');
+        card.className = 'memo-card';
+        card.innerHTML = `
+          <div class="memo-card-header">
+            <span>메모 #${index + 1}</span>
+            <span>${escapeHtml(memo.time || '')}</span>
+          </div>
+          <div class="memo-card-content">${escapeHtml(memo.text)}</div>
+          <div class="memo-card-actions">
+            <button class="btn btn-secondary btn-xs" onclick="copyMemoText('${memo.id}')">📋 복사</button>
+            <button class="btn btn-secondary btn-xs" onclick="editMemo('${memo.id}')">✏️ 수정</button>
+            <button class="btn btn-danger btn-xs" onclick="deleteMemo('${memo.id}')">🗑️ 삭제</button>
+          </div>
+        `;
+        memoList.appendChild(card);
+      });
+    }
+
+    function handleAddOrUpdateMemo() {
+      const text = noteInput.value.trim();
+      if (!text) {
+        alert('메모 내용을 입력해 주세요.');
+        return;
+      }
+
+      const nowTimeStr = new Date().toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' });
+
+      if (editingMemoId) {
+        // Update existing memo
+        memos = memos.map(m => m.id === editingMemoId ? { ...m, text: text, time: `${nowTimeStr} (수정됨)` } : m);
+        cancelEditingMemo();
+      } else {
+        // Add new memo
+        memos.push({
+          id: Date.now(),
+          date: selectedDate,
+          text: text,
+          time: nowTimeStr
+        });
+        noteInput.value = '';
+        noteStats.textContent = '0자';
+      }
+
+      saveMemos();
+    }
+
+    function editMemo(id) {
+      const target = memos.find(m => String(m.id) === String(id));
+      if (!target) return;
+
+      editingMemoId = target.id;
+      noteInput.value = target.text;
+      noteStats.textContent = `${target.text.length}자`;
+      addMemoBtn.textContent = '💾 메모 수정 완료';
+      cancelEditMemoBtn.style.display = 'inline-flex';
+      noteInput.focus();
+    }
+
+    function cancelEditingMemo() {
+      editingMemoId = null;
+      noteInput.value = '';
+      noteStats.textContent = '0자';
+      addMemoBtn.textContent = '➕ 메모 추가';
+      cancelEditMemoBtn.style.display = 'none';
+    }
+
+    function deleteMemo(id) {
+      if (confirm('이 메모를 삭제하시겠습니까?')) {
+        memos = memos.filter(m => String(m.id) !== String(id));
+        if (editingMemoId === id) cancelEditingMemo();
+        saveMemos();
+      }
+    }
+
+    function copyMemoText(id) {
+      const target = memos.find(m => String(m.id) === String(id));
+      if (!target) return;
+      navigator.clipboard.writeText(target.text).then(() => {
+        alert('메모 내용이 클립보드에 복사되었습니다.');
+      });
+    }
+
+    addMemoBtn.addEventListener('click', handleAddOrUpdateMemo);
+    cancelEditMemoBtn.addEventListener('click', cancelEditingMemo);
+
+    deleteDateNotesBtn.addEventListener('click', () => {
+      const dateMemos = memos.filter(m => m.date === selectedDate);
+      if (dateMemos.length === 0) {
+        alert('이 날짜에 삭제할 메모가 없습니다.');
+        return;
+      }
+      if (confirm(`[${selectedDate}] 날짜의 모든 메모(${dateMemos.length}개)를 삭제하시겠습니까?`)) {
+        memos = memos.filter(m => m.date !== selectedDate);
+        cancelEditingMemo();
+        saveMemos();
+      }
+    });
+
+    // Excel Export (Memos for Current Selected Date)
+    exportNoteExcelBtn.addEventListener('click', () => {
+      const dateMemos = memos.filter(m => m.date === selectedDate);
+      if (dateMemos.length === 0) {
+        alert('엑셀로 저장할 메모가 없습니다.');
+        return;
+      }
+
+      let csvContent = "\uFEFF번호,날짜,작성시간,메모 내용\n";
+      dateMemos.forEach((m, idx) => {
+        const escapedText = '"' + m.text.replace(/"/g, '""').replace(/\n/g, ' ') + '"';
+        csvContent += `${idx + 1},"${m.date}","${m.time || ''}",${escapedText}\n`;
+      });
+
+      downloadCsv(csvContent, `메모목록_${selectedDate}.csv`);
+    });
+
+    // Excel Export (All Memos + Todos Combined)
+    exportAllExcelBtn.addEventListener('click', () => {
+      if (memos.length === 0 && todos.length === 0) {
+        alert('저장된 메모나 할 일 데이터가 없습니다.');
+        return;
+      }
+
+      let csvContent = "\uFEFF구분,날짜,상태/시간,내용\n";
+
+      // Export all memos
+      memos.forEach(m => {
+        const escapedText = '"' + m.text.replace(/"/g, '""').replace(/\n/g, ' ') + '"';
+        csvContent += `메모,"${m.date}","${m.time || ''}",${escapedText}\n`;
+      });
+
+      // Export all todos
+      todos.forEach(todo => {
+        const status = todo.completed ? '완료' : '진행중';
+        const escapedText = '"' + todo.text.replace(/"/g, '""') + '"';
+        csvContent += `할일,"${todo.date}","${status}",${escapedText}\n`;
+      });
+
+      downloadCsv(csvContent, `일정_ 및_메모_전체기록.csv`);
+    });
+
+    function downloadCsv(content, filename) {
+      const blob = new Blob([content], { type: 'text/csv;charset=utf-8;' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    }
+
+    // --- 6. Download Standalone HTML File Logic ---
+    document.getElementById('downloadHtmlBtn').addEventListener('click', () => {
+      const htmlContent = "<!DOCTYPE html>\n" + document.documentElement.outerHTML;
+      const blob = new Blob([htmlContent], { type: 'text/html;charset=utf-8' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'standalone.html';
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    });
+
+    // --- 7. Helper Utilities ---
+    function escapeHtml(str) {
+      return str.replace(/[&<>"']/g, function(m) {
+        return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;' }[m];
+      });
+    }
+
+    document.getElementById('clearAllDataBtn').addEventListener('click', () => {
+      if (confirm('모든 일정 및 메모 데이터를 삭제하고 초기 상태로 돌리시겠습니까?')) {
+        localStorage.clear();
+        location.reload();
+      }
+    });
+
+    // Initial load
+    updateDateDisplay();
+  </script>
+</body>
+</html>

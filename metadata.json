@@ -1,0 +1,6 @@
+{
+  "name": "나의 일정 관리",
+  "description": "브라우저에서 다운로드하여 바로 실행할 수 있는 순수 HTML 나의 일정 관리 워크스페이스",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
