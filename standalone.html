@@ -548,12 +548,13 @@
       <!-- To-Do List Card -->
       <div class="card col-6">
         <div class="card-title">
-          <span>📋 일자별 할 일 목록 (최대 10개씩 표시)</span>
+          <span>📋 일자별 할 일 목록 (최대 5개씩 표시)</span>
           <span id="todoBadge" class="badge">0개 남음</span>
         </div>
         <div class="input-group">
           <input type="text" id="todoInput" placeholder="선택한 날짜의 할 일을 입력하세요..." />
           <button id="addTodoBtn" class="btn btn-primary">추가</button>
+          <button id="cancelEditTodoBtn" class="btn btn-secondary" style="display: none;">취소</button>
         </div>
         <div class="filter-tabs">
           <button class="tab-btn active" data-filter="all">전체</button>
@@ -563,7 +564,7 @@
         <ul id="todoList" class="todo-list">
           <!-- Dynamically populated -->
         </ul>
-        <!-- Pagination controls for 10 items per page -->
+        <!-- Pagination controls for 5 items per page -->
         <div class="pagination-bar">
           <span id="pageInfo">1 / 1 페이지 (총 0개 항목)</span>
           <div style="display: flex; gap: 6px;">
@@ -576,7 +577,7 @@
       <!-- Quick Notes Card (Multi Memos per Date) -->
       <div class="card col-6">
         <div class="card-title">
-          <span>📝 일자별 메모장 목록</span>
+          <span>📝 일자별 메모장 목록 (최대 5개씩 표시)</span>
           <span id="noteBadge" class="badge">0개 메모</span>
         </div>
         
@@ -595,6 +596,15 @@
         <!-- List of memos for the selected date -->
         <div id="memoList" class="memo-list">
           <!-- Dynamically rendered memos -->
+        </div>
+
+        <!-- Pagination controls for memos (5 per page) -->
+        <div class="pagination-bar">
+          <span id="memoPageInfo">1 / 1 페이지 (총 0개 메모)</span>
+          <div style="display: flex; gap: 6px;">
+            <button id="prevMemoPageBtn" class="tab-btn">◀ 이전</button>
+            <button id="nextMemoPageBtn" class="tab-btn">다음 ▶</button>
+          </div>
         </div>
         
         <!-- Bottom Action Bar -->
@@ -683,9 +693,11 @@
         dateFormattedDisplay.textContent = selectedDate;
       }
 
-      // Reset editing state, todo page, and render memos
+      // Reset editing state, todo page, memo page, and render
+      cancelEditingTodo();
       cancelEditingMemo();
       todoCurrentPage = 1;
+      memoCurrentPage = 1;
       renderTodos();
       renderMemos();
     }
@@ -715,16 +727,18 @@
       updateDateDisplay();
     });
 
-    // --- 4. Todo List State & Pagination (10 per page) ---
+    // --- 4. Todo List State & Pagination (5 per page) ---
     let todos = JSON.parse(localStorage.getItem('todos') || '[]');
     todos = todos.map(t => t.date ? t : { ...t, date: getTodayString() });
 
     let currentFilter = 'all';
     let todoCurrentPage = 1;
-    const PAGE_SIZE = 10;
+    let editingTodoId = null;
+    const PAGE_SIZE = 5;
 
     const todoInput = document.getElementById('todoInput');
     const addTodoBtn = document.getElementById('addTodoBtn');
+    const cancelEditTodoBtn = document.getElementById('cancelEditTodoBtn');
     const todoList = document.getElementById('todoList');
     const todoBadge = document.getElementById('todoBadge');
     const filterBtns = document.querySelectorAll('.filter-tabs .tab-btn');
@@ -781,23 +795,50 @@
             <input type="checkbox" class="todo-checkbox" ${todo.completed ? 'checked' : ''} onchange="toggleTodo(${todo.id})">
             <span>${escapeHtml(todo.text)}</span>
           </div>
-          <button class="todo-delete" onclick="deleteTodo(${todo.id})">✕</button>
+          <div style="display: flex; gap: 4px; align-items: center;">
+            <button class="btn btn-secondary btn-xs" style="padding: 2px 8px; font-size: 11px;" onclick="editTodo(${todo.id})" title="수정">✏️ 수정</button>
+            <button class="todo-delete" onclick="deleteTodo(${todo.id})" title="삭제">✕</button>
+          </div>
         `;
         todoList.appendChild(li);
       });
     }
 
-    function addTodo() {
+    function handleAddOrUpdateTodo() {
       const text = todoInput.value.trim();
       if (!text) return;
-      todos.push({
-        id: Date.now(),
-        date: selectedDate,
-        text: text,
-        completed: false
-      });
-      todoInput.value = '';
+
+      if (editingTodoId) {
+        todos = todos.map(t => t.id === editingTodoId ? { ...t, text: text } : t);
+        cancelEditingTodo();
+      } else {
+        todos.push({
+          id: Date.now(),
+          date: selectedDate,
+          text: text,
+          completed: false
+        });
+        todoInput.value = '';
+      }
       saveAndRenderTodos();
+    }
+
+    function editTodo(id) {
+      const target = todos.find(t => String(t.id) === String(id));
+      if (!target) return;
+
+      editingTodoId = target.id;
+      todoInput.value = target.text;
+      addTodoBtn.textContent = '수정 완료';
+      if (cancelEditTodoBtn) cancelEditTodoBtn.style.display = 'inline-flex';
+      todoInput.focus();
+    }
+
+    function cancelEditingTodo() {
+      editingTodoId = null;
+      todoInput.value = '';
+      addTodoBtn.textContent = '추가';
+      if (cancelEditTodoBtn) cancelEditTodoBtn.style.display = 'none';
     }
 
     function toggleTodo(id) {
@@ -807,12 +848,14 @@
 
     function deleteTodo(id) {
       todos = todos.filter(t => t.id !== id);
+      if (editingTodoId === id) cancelEditingTodo();
       saveAndRenderTodos();
     }
 
-    addTodoBtn.addEventListener('click', addTodo);
+    addTodoBtn.addEventListener('click', handleAddOrUpdateTodo);
+    if (cancelEditTodoBtn) cancelEditTodoBtn.addEventListener('click', cancelEditingTodo);
     todoInput.addEventListener('keypress', (e) => {
-      if (e.key === 'Enter') addTodo();
+      if (e.key === 'Enter') handleAddOrUpdateTodo();
     });
 
     filterBtns.forEach(btn => {
@@ -821,6 +864,7 @@
         btn.classList.add('active');
         currentFilter = btn.dataset.filter;
         todoCurrentPage = 1;
+        cancelEditingTodo();
         renderTodos();
       });
     });
@@ -868,6 +912,8 @@
     }
 
     let editingMemoId = null;
+    let memoCurrentPage = 1;
+    const MEMO_PAGE_SIZE = 5;
 
     const noteInput = document.getElementById('noteInput');
     const noteBadge = document.getElementById('noteBadge');
@@ -878,6 +924,9 @@
     const exportNoteExcelBtn = document.getElementById('exportNoteExcelBtn');
     const exportAllExcelBtn = document.getElementById('exportAllExcelBtn');
     const deleteDateNotesBtn = document.getElementById('deleteDateNotesBtn');
+    const memoPageInfo = document.getElementById('memoPageInfo');
+    const prevMemoPageBtn = document.getElementById('prevMemoPageBtn');
+    const nextMemoPageBtn = document.getElementById('nextMemoPageBtn');
 
     noteInput.addEventListener('input', () => {
       noteStats.textContent = `${noteInput.value.length}자`;
@@ -894,17 +943,39 @@
 
       noteBadge.textContent = `${dateMemos.length}개 메모`;
 
-      if (dateMemos.length === 0) {
+      const totalMemos = dateMemos.length;
+      const totalMemoPages = Math.ceil(totalMemos / MEMO_PAGE_SIZE) || 1;
+
+      if (memoCurrentPage > totalMemoPages) memoCurrentPage = totalMemoPages;
+      if (memoCurrentPage < 1) memoCurrentPage = 1;
+
+      const startIndex = (memoCurrentPage - 1) * MEMO_PAGE_SIZE;
+      const endIndex = Math.min(startIndex + MEMO_PAGE_SIZE, totalMemos);
+      const pageMemos = dateMemos.slice(startIndex, endIndex);
+
+      if (memoPageInfo) {
+        memoPageInfo.textContent = `${memoCurrentPage} / ${totalMemoPages} 페이지 (총 ${totalMemos}개 메모 중 ${totalMemos === 0 ? 0 : startIndex + 1}~${endIndex})`;
+      }
+
+      if (prevMemoPageBtn && nextMemoPageBtn) {
+        prevMemoPageBtn.disabled = memoCurrentPage <= 1;
+        nextMemoPageBtn.disabled = memoCurrentPage >= totalMemoPages;
+        prevMemoPageBtn.style.opacity = memoCurrentPage <= 1 ? '0.5' : '1';
+        nextMemoPageBtn.style.opacity = memoCurrentPage >= totalMemoPages ? '0.5' : '1';
+      }
+
+      if (pageMemos.length === 0) {
         memoList.innerHTML = `<div style="text-align:center; color: var(--text-muted); font-size: 13px; padding: 30px 10px;">이 날짜에 작성된 메모가 없습니다. 위에 메모를 입력하고 '메모 추가'를 누르세요.</div>`;
         return;
       }
 
-      dateMemos.forEach((memo, index) => {
+      pageMemos.forEach((memo, index) => {
+        const globalIndex = startIndex + index;
         const card = document.createElement('div');
         card.className = 'memo-card';
         card.innerHTML = `
           <div class="memo-card-header">
-            <span>메모 #${index + 1}</span>
+            <span>메모 #${globalIndex + 1}</span>
             <span>${escapeHtml(memo.time || '')}</span>
           </div>
           <div class="memo-card-content">${escapeHtml(memo.text)}</div>
@@ -915,6 +986,24 @@
           </div>
         `;
         memoList.appendChild(card);
+      });
+    }
+
+    if (prevMemoPageBtn && nextMemoPageBtn) {
+      prevMemoPageBtn.addEventListener('click', () => {
+        if (memoCurrentPage > 1) {
+          memoCurrentPage--;
+          renderMemos();
+        }
+      });
+
+      nextMemoPageBtn.addEventListener('click', () => {
+        const dateMemos = memos.filter(m => m.date === selectedDate);
+        const totalPages = Math.ceil(dateMemos.length / MEMO_PAGE_SIZE) || 1;
+        if (memoCurrentPage < totalPages) {
+          memoCurrentPage++;
+          renderMemos();
+        }
       });
     }
 
